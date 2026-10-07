@@ -125,22 +125,17 @@ label input{padding:7px 10px;border:2px solid var(--line);border-radius:8px;back
     <button id="cartBtn">Carrito <span class="cn" id="cartN">0</span></button>
   </div>
 </header>
-
 <main id="home"><div class="tiles" id="tiles"></div></main>
-
 <main id="sec" hidden>
   <h2 id="secTitle"></h2>
   <div class="bar"><input type="search" id="q" placeholder="Buscar"></div>
   <div class="chips" id="chips"></div>
   <div class="grid" id="grid"></div>
 </main>
-
 <dialog id="detail"><div class="dbody" id="detailBody"></div></dialog>
 <dialog id="ordD"><div class="dbody"><h2 style="margin:0">Hacer pedido</h2><p style="margin:0">Se te dirigirá a WhatsApp para que hagas el pedido del multimedia que no esté disponible.</p><div class="row"><button type="button" data-x="ordD">Cancelar</button><a class="wa" id="ordGo" href="#" target="_blank" rel="noopener">Continuar a WhatsApp</a></div></div></dialog>
 <dialog id="cartD"><div class="dbody"><h2 style="margin:0">Tu carrito</h2><div id="cartList"></div><div id="cartFoot" class="dbody" style="padding:0"></div><div class="row"><button class="main" data-x="cartD">Seguir viendo</button></div></div></dialog>
-
 <a class="wa waf" href="https://wa.me/5359692806?text=Hola%2C%20quiero%20hacer%20una%20pregunta" target="_blank" rel="noopener">Escríbenos por WhatsApp</a>
-
 <script>
 const WA="5359692806";
 const $=s=>document.querySelector(s);
@@ -157,7 +152,6 @@ const badge=g=>'<span class="st st-'+st(g)+'">'+STATUS[st(g)][0]+'</span>';
 const count=s=>s.type==='latest'?latestOf(s).length:db.items.filter(i=>i.sec===s.id).length;
 const latestOf=s=>db.items.filter(g=>g.latest&&(g.kind!=='chapter'||g.sec===s.id)).sort((a,b)=>(b.at||0)-(a.at||0));
 const sub=(g,L)=>L?(g.kind==='chapter'?'Capítulo nuevo':((db.sections.find(x=>x.id===g.sec)||{}).name||'')):[catsOf(g).join(', '),g.year].filter(Boolean).join(' · ');
-
 let db=null,cur=null,cat='Todos',q='',secPushed=false;
 const sec=()=>db.sections.find(s=>s.id===cur);
 let cart=[];try{cart=JSON.parse(localStorage.getItem('catalogo_carrito'))||[]}catch(e){}
@@ -168,7 +162,6 @@ let custName='';try{custName=localStorage.getItem('catalogo_nombre')||''}catch(e
 const waLink=()=>{const L=cartItems(),tot=L.reduce((a,g)=>a+Number(g.price||0),0);
   const msg=(custName?'Hola, soy '+custName+'. Quiero hacer este pedido:':'Hola, quiero hacer este pedido:')+'\n'+L.map(g=>'- '+g.title+' — '+money(g.price)).join('\n')+'\nTotal: '+money(tot);
   return 'https://wa.me/'+WA+'?text='+encodeURIComponent(msg)};
-
 function render(){updCart();
   $('#home').hidden=!!cur;$('#sec').hidden=!cur;$('#back').hidden=!cur;
   const b=(cur&&sec().bg)||db.bg;
@@ -223,7 +216,6 @@ function openOrder(g){
   const msg=g?'Hola, quisiera hacer un pedido de: '+g.title+' ('+STATUS[st(g)][0]+')':'Hola, quisiera hacer un pedido de un multimedia que no está disponible en el catálogo:';
   $('#ordGo').href='https://wa.me/'+WA+'?text='+encodeURIComponent(msg);$('#ordD').showModal();
 }
-
 document.addEventListener('click',e=>{
   const t=e.target.closest('button')||(e.target.matches('dialog')?e.target:null);if(!t)return;
   const d=t.dataset;
@@ -251,25 +243,14 @@ addEventListener('popstate',()=>{
 $('#cartBtn').onclick=()=>{renderCart();$('#cartD').showModal()};
 $('#ordBtn').onclick=()=>openOrder(null);
 $('#ordGo').addEventListener('click',()=>$('#ordD').close());
-
 const ZS=[.8,.9,1,1.15,1.3,1.5];let zi=2;
 try{const v=parseInt(localStorage.getItem('catalogo_zoom'));if(v>=0&&v<ZS.length)zi=v}catch(e){}
 function applyZ(){const z=ZS[zi];document.documentElement.style.zoom=z;document.documentElement.style.setProperty('--z',z);try{localStorage.setItem('catalogo_zoom',zi)}catch(e){}}
 if(window.CSS&&CSS.supports&&CSS.supports('zoom','1.1'))applyZ();else{const o=$('#zOut'),i=$('#zIn');if(o)o.hidden=true;if(i)i.hidden=true}
 $('#zOut').onclick=()=>{if(zi>0){zi--;applyZ()}};
 $('#zIn').onclick=()=>{if(zi<ZS.length-1){zi++;applyZ()}};
-
 (async()=>{
-  try{
-    const r=await fetch('datos.json?_='+Date.now());
-    if(!r.ok)throw new Error('No se pudo cargar datos.json');
-    const data=await r.json();
-    if(data.sections&&data.items)db=data;else throw new Error('Datos inválidos');
-  }catch(e){
-    console.warn('Sin datos.json:',e);
-    db={sections:[],items:[]};
-    document.getElementById('grid').innerHTML='<p class="empty">No se pudieron cargar los datos. Recarga la página.</p>';
-  }
+  try{const r=await fetch('datos.json?_='+Date.now());const d=await r.json();db=d;}catch(e){db={sections:[],items:[]};}
   render();
 })();
 </script>
