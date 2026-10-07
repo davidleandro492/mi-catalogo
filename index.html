@@ -65,6 +65,11 @@ label input{padding:7px 10px;border:2px solid var(--line);border-radius:8px;back
 .addr{margin:0;padding:10px 14px;border:2px dashed var(--line);border-radius:10px;font-size:.92rem}
 .waf{position:fixed;right:16px;bottom:16px;z-index:5;box-shadow:0 4px 14px rgba(0,0,0,.3)}
 .new{position:absolute;left:8px;top:8px;background:var(--acc);color:#fff;font-size:.75rem;font-weight:800;padding:2px 9px;border-radius:99px}
+.airing{position:absolute;left:8px;top:38px;font-size:.7rem;font-weight:800;padding:2px 9px;border-radius:99px;color:#fff}
+.airing.on{background:#16a34a}
+.airing.paused{background:#eab308;color:#14213d}
+.airing.ended{background:#64748b}
+.airing.inl{position:static;display:inline-block;margin-left:8px;vertical-align:middle;font-size:.8rem}
 @media(max-width:700px){
   header{flex-direction:column;align-items:flex-start;padding:12px 4vw;gap:8px}
   .hr{width:100%;justify-content:flex-start}
@@ -106,6 +111,7 @@ label input{padding:7px 10px;border:2px solid var(--line);border-radius:8px;back
   .info small{font-size:.75rem}
   .st{font-size:.65rem;padding:1px 6px}
   .new{font-size:.65rem;padding:1px 6px}
+  .airing{font-size:.6rem;padding:1px 6px;top:32px}
   .chip{padding:3px 9px;font-size:.8rem}
   .price{font-size:.78rem;padding:2px 8px 2px 10px;bottom:8px}
   .waf{right:10px;bottom:10px;padding:6px 12px;font-size:.85rem}
@@ -149,6 +155,9 @@ const cover=g=>pic(g)?"background-image:url('"+pic(g)+"')":grad(g.title);
 const STATUS={ok:['Disponible'],no:['No disponible'],soon:['Próximamente']};
 const st=g=>g.status||'ok';
 const badge=g=>'<span class="st st-'+st(g)+'">'+STATUS[st(g)][0]+'</span>';
+const AIRING={on:'En emisión',paused:'Pausada',ended:'Finalizada'};
+const airingBadge=g=>{const a=g.airing;if(!a||!AIRING[a])return '';return '<span class="airing '+a+'">'+AIRING[a]+'</span>'};
+const airingInline=g=>{const a=g.airing;if(!a||!AIRING[a])return '';return '<span class="airing inl '+a+'">'+AIRING[a]+'</span>'};
 const count=s=>s.type==='latest'?latestOf(s).length:db.items.filter(i=>i.sec===s.id).length;
 const latestOf=s=>db.items.filter(g=>g.latest&&(g.kind!=='chapter'||g.sec===s.id)).sort((a,b)=>(b.at||0)-(a.at||0));
 const sub=(g,L)=>L?(g.kind==='chapter'?'Capítulo nuevo':((db.sections.find(x=>x.id===g.sec)||{}).name||'')):[catsOf(g).join(', '),g.year].filter(Boolean).join(' · ');
@@ -184,18 +193,18 @@ function renderSec(){
   const base=L?latestOf(s):db.items.filter(g=>g.sec===cur&&(cat==='Todos'||catsOf(g).includes(cat)));
   const list=base.filter(g=>g.title.toLowerCase().includes(q));
   $('#grid').innerHTML=list.length?list.map(g=>'<button class="card" data-id="'+g.id+'">'
-      +'<div class="cover" style="'+cover(g)+'">'+(pic(g)?'':esc(ini(g.title)))+(g.latest?'<span class="new">Nuevo</span>':'')+badge(g)+'<span class="price">'+money(g.price)+'</span></div>'
+      +'<div class="cover" style="'+cover(g)+'">'+(pic(g)?'':esc(ini(g.title)))+(g.latest?'<span class="new">Nuevo</span>':'')+airingBadge(g)+badge(g)+'<span class="price">'+money(g.price)+'</span></div>'
       +'<div class="info"><b>'+esc(g.title)+'</b><small>'+esc(sub(g,L))+'</small></div>'
       +'</button>').join(''):'<p class="empty">'+(base.length?'No hay títulos con ese filtro.':'Esta sección está vacía.')+'</p>';
 }
 function openDetail(id){
   const g=db.items.find(x=>x.id===id);if(!g)return;
   const s=db.sections.find(x=>x.id===g.sec)||{},t=g.kind==='chapter'?'chapter':s.type;
-  const facts=[['Plataforma',g.platform],['Año',g.year],['Duración',g.duration],['Almacenamiento',g.size]].filter(f=>f[1]);
+  const facts=[['Plataforma',g.platform],['Año',g.year],['Duración',g.duration],['Almacenamiento',g.size],['Idioma',g.lang],['Calidad',g.quality],['Formato',g.format]].filter(f=>f[1]);
   const inC=cart.includes(g.id),av=st(g)==='ok';
   $('#detailBody').innerHTML=
     '<div class="top"><div class="cover" style="'+cover(g)+'">'+(pic(g)?'':esc(ini(g.title)))+'</div>'
-      +'<div><h2>'+esc(g.title)+'</h2><small>'+(g.kind==='chapter'?'Capítulo nuevo':esc(catsOf(g).join(', ')))+'</small><br><span class="big">'+money(g.price)+'</span><span class="st inl st-'+st(g)+'">'+STATUS[st(g)][0]+'</span></div></div>'
+      +'<div><h2>'+esc(g.title)+'</h2><small>'+(g.kind==='chapter'?'Capítulo nuevo':esc(catsOf(g).join(', ')))+'</small><br><span class="big">'+money(g.price)+'</span><span class="st inl st-'+st(g)+'">'+STATUS[st(g)][0]+'</span>'+airingInline(g)+'</div></div>'
     +(facts.length?'<p class="facts">'+facts.map(f=>'<span><b>'+f[0]+':</b> '+esc(f[1])+'</span>').join('')+'</p>':'')
     +(g.desc?'<p class="desc">'+esc(g.desc)+'</p>':'')
     +(t==='game'?'<div class="reqs"><div><h3>Requisitos mínimos</h3><p>'+(esc(g.min)||'Sin datos')+'</p></div><div><h3>Requisitos recomendados</h3><p>'+(esc(g.rec)||'Sin datos')+'</p></div></div>':'')
